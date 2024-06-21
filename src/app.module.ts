@@ -12,13 +12,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
     TypeOrmModule.forRootAsync({
       useFactory: async (configService: ConfigService) => ({
         type: 'postgres',
-        host: 'localhost',
-        port: 5432,
+        host: configService.get<string>('DB_HOST'),
+        port: +configService.get<number>('DB_PORT'),
         username: configService.get<string>('DB_USERNAME'),
         password: configService.get<string>('DB_PASSWORD'),
         database: configService.get<string>('DB_NAME'),
         autoLoadEntities: true, // frisar
         synchronize: false,
+        migrations: [__dirname + '/migrations/**/*'],
       }),
       inject: [ConfigService]}),
     TaskModule, 
