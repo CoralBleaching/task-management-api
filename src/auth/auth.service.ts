@@ -1,11 +1,13 @@
-import { ForbiddenException, Injectable } from '@nestjs/common'
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+} from '@nestjs/common'
 import { AuthDto } from './auth.dto'
 import * as argon from 'argon2'
 import { InjectRepository } from '@nestjs/typeorm'
 import { QueryFailedError, Repository } from 'typeorm'
 import { User } from 'src/user/user.entity'
-import { UserDto } from 'src/user/user.dto'
-import { log } from 'console'
 
 @Injectable()
 export class AuthService {
@@ -22,24 +24,54 @@ export class AuthService {
       email: auth.email,
       password: hash,
     })
-    return this.userRepository.save(newUser).catch((err: QueryFailedError) => {
-      throw new ForbiddenException(`Email ${newUser.email} already registered.`)
-    })
+    let saved = await this.userRepository
+      .save(newUser)
+      .catch((_err: QueryFailedError) => {
+        throw new ForbiddenException(
+          `Email ${newUser.email} already registered.`,
+        )
+      })
+    delete saved.password
+    return saved
   }
 
-  findAll() {
-    return `This action returns all auth`
+  async signIn(auth: Partial<AuthDto>): Promise<User> {
+    const user = await this.findOne({ email: auth.email })
+    if (!user) {
+      throw new ForbiddenException('Invalid credentials (email)')
+    }
+    console.log(user)
+    console.log(await argon.hash(auth.password))
+    const match = await argon.verify(user.password, auth.password)
+    if (!match) {
+      throw new ForbiddenException('Invalid credentials (password)')
+    }
+    delete user.password
+    return user
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} auth`
+  findOne(searchParams: { id?: number; email?: string }): Promise<User> {
+    const { id, email } = searchParams
+    if (id) {
+      return this.userRepository.findOne({
+        where: { id },
+      })
+    } else if (email) {
+      return this.userRepository.findOne({
+        where: { email },
+      })
+    } else {
+      throw new BadRequestException(
+        'Need id or email in order to find one user.',
+      )
+    }
   }
 
-  update(id: number, authDto: AuthDto) {
-    return `This action updates a #${id} auth`
-  }
+  // update(id: number, _authDto: AuthDto) {
+  //   return `This action updates a #${id} auth`
+  // }
 
-  remove(id: number) {
-    return `This action removes a #${id} auth`
-  }
+  // remove(id: number) {
+  //   return `This action removes a #${id} auth`
+  // }
 }
