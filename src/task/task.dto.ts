@@ -1,11 +1,18 @@
-// export enum TaskStatus {
-//     PENDING = "pending",
-//     CONCLUDED = "concluded",
-// }
+import { IsNotEmpty, IsString } from 'class-validator'
 
-export class TaskDto {
-    id?: number
-    title: string
-    description: string
-    status: string
+export enum TaskStatus {
+  PENDING = 'pending',
+  CONCLUDED = 'concluded',
+}
+
+export class CreateTaskDto {
+  @IsNotEmpty()
+  @IsString()
+  title: string
+
+  @IsNotEmpty()
+  @IsString()
+  description: string
+
+  status: TaskStatus
 }
