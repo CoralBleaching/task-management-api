@@ -1,20 +1,18 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
-import { TaskService } from './task.service';
-import { TaskDto } from './task.dto';
+import { Body, Controller, Get, Post } from '@nestjs/common'
+import { TaskService } from './task.service'
+import { CreateTaskDto } from './task.dto'
 
 @Controller('task')
 export class TaskController {
-    constructor(
-        private readonly taskService: TaskService
-    ) {}
-    
-    @Post()
-    insert(@Body() task: TaskDto) {
-        return this.taskService.insert(task)
-    }
+  constructor(private readonly taskService: TaskService) {}
 
-    @Get()
-    findAll() {
-        this.taskService.getAll()
-    }
+  @Post()
+  insert(@Body() task: CreateTaskDto) {
+    return this.taskService.insert(task)
+  }
+
+  @Get()
+  findAll() {
+    this.taskService.getAll()
+  }
 }
