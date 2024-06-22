@@ -8,46 +8,55 @@ import * as argon from 'argon2'
 import { InjectRepository } from '@nestjs/typeorm'
 import { QueryFailedError, Repository } from 'typeorm'
 import { User } from 'src/user/user.entity'
+import { JwtService } from '@nestjs/jwt'
+import { ConfigService } from '@nestjs/config'
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectRepository(User)
-    private readonly userRepository: Repository<User>,
+    private userRepository: Repository<User>,
+    private jwt: JwtService,
+    private configService: ConfigService,
   ) {}
 
-  async signUp(auth: AuthDto) {
+  async signUp(auth: AuthDto): Promise<{ access_token: string }> {
     const hash = await argon.hash(auth.password)
-    const newUser = this.userRepository.create({
+    const user = this.userRepository.create({
       firstName: auth.firstName,
       lastName: auth.lastName,
       email: auth.email,
       password: hash,
     })
-    let saved = await this.userRepository
-      .save(newUser)
-      .catch((_err: QueryFailedError) => {
-        throw new ForbiddenException(
-          `Email ${newUser.email} already registered.`,
-        )
-      })
-    delete saved.password
-    return saved
+    this.userRepository.save(user).catch((_err: QueryFailedError) => {
+      throw new ForbiddenException(`Email ${user.email} already registered.`)
+    })
+    return { access_token: await this.signToken(user.id, user.email) }
   }
 
-  async signIn(auth: Partial<AuthDto>): Promise<User> {
+  async signIn(auth: Partial<AuthDto>): Promise<{ access_token: string }> {
     const user = await this.findOne({ email: auth.email })
     if (!user) {
       throw new ForbiddenException('Invalid credentials (email)')
     }
-    console.log(user)
-    console.log(await argon.hash(auth.password))
     const match = await argon.verify(user.password, auth.password)
     if (!match) {
       throw new ForbiddenException('Invalid credentials (password)')
     }
-    delete user.password
-    return user
+    return { access_token: await this.signToken(user.id, user.email) }
+  }
+
+  signToken(id: number, email: string): Promise<string> {
+    const payload = {
+      sub: id,
+      email,
+    }
+    const expirationTime = this.configService.get<string>('JWT_EXPIRES_IN')
+    console.log(expirationTime)
+    return this.jwt.signAsync(payload, {
+      secret: this.configService.get('JWT_SECRET'), // TODO: get rid of magic strings
+      expiresIn: expirationTime,
+    })
   }
 
   findOne(searchParams: { id?: number; email?: string }): Promise<User> {
