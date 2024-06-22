@@ -13,12 +13,16 @@ import { ConfigService } from '@nestjs/config'
 
 @Injectable()
 export class AuthService {
+  private expiresIn: string
+
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private jwt: JwtService,
     private configService: ConfigService,
-  ) {}
+  ) {
+    this.expiresIn = this.configService.get<string>('JWT_EXPIRES_IN')
+  }
 
   async signUp(auth: AuthDto): Promise<{ access_token: string }> {
     const hash = await argon.hash(auth.password)
@@ -51,11 +55,9 @@ export class AuthService {
       sub: id,
       email,
     }
-    const expirationTime = this.configService.get<string>('JWT_EXPIRES_IN')
-    console.log(expirationTime)
     return this.jwt.signAsync(payload, {
-      secret: this.configService.get('JWT_SECRET'), // TODO: get rid of magic strings
-      expiresIn: expirationTime,
+      secret: this.configService.get('JWT_SECRET'),
+      expiresIn: this.expiresIn,
     })
   }
 
@@ -75,12 +77,4 @@ export class AuthService {
       )
     }
   }
-
-  // update(id: number, _authDto: AuthDto) {
-  //   return `This action updates a #${id} auth`
-  // }
-
-  // remove(id: number) {
-  //   return `This action removes a #${id} auth`
-  // }
 }

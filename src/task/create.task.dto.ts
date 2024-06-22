@@ -1,9 +1,5 @@
-import { IsNotEmpty, IsString } from 'class-validator'
-
-export enum TaskStatus {
-  PENDING = 'pending',
-  CONCLUDED = 'concluded',
-}
+import { IsEnum, IsNotEmpty, IsString } from 'class-validator'
+import { TaskStatus } from './TaskStatus'
 
 export class CreateTaskDto {
   @IsNotEmpty()
@@ -14,5 +10,6 @@ export class CreateTaskDto {
   @IsString()
   description: string
 
+  @IsEnum(TaskStatus)
   status: TaskStatus
 }

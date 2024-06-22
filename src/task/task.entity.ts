@@ -1,6 +1,6 @@
 import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
-import { TaskStatus } from './task.dto'
 import { User } from 'src/user/user.entity'
+import { TaskStatus } from './TaskStatus'
 
 @Entity()
 export class Task {
