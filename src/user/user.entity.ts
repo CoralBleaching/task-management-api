@@ -18,6 +18,9 @@ export class User {
   @Column()
   password: string
 
+  @Column({ default: 0 })
+  tokenVersion: number
+
   @OneToMany(() => Task, (task: Task) => task.user)
   tasks: Task[]
 }

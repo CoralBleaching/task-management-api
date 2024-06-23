@@ -7,17 +7,21 @@ export class Task {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Column({ unique: true, nullable: false })
+  @Column()
   title: string
 
-  @Column({ nullable: false })
+  @Column({ nullable: true })
   description: string
 
   @Column({
     type: 'enum',
     enum: TaskStatus,
+    nullable: false,
   })
   status: TaskStatus
+
+  @Column({ nullable: true })
+  deadline: Date
 
   @ManyToOne(() => User, (user: User) => user.tasks)
   user: User
