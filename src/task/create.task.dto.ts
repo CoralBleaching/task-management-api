@@ -1,5 +1,12 @@
-import { IsEnum, IsNotEmpty, IsString } from 'class-validator'
+import {
+  IsDate,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator'
 import { TaskStatus } from './TaskStatus'
+import { Transform } from 'class-transformer'
 
 export class CreateTaskDto {
   @IsNotEmpty()
@@ -12,4 +19,9 @@ export class CreateTaskDto {
 
   @IsEnum(TaskStatus)
   status: TaskStatus
+
+  @IsOptional()
+  @IsDate()
+  @Transform(({ value }) => new Date(value), { toClassOnly: true })
+  deadline: Date
 }
