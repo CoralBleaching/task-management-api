@@ -24,16 +24,6 @@ export class TaskService {
     return this.taskRepository.save(newTask)
   }
 
-  //   async getAll(user: User, status?: TaskStatus): Promise<Task[]> {
-  //     const query = this.taskRepository
-  //       .createQueryBuilder('task')
-  //       .where('task.userId = :userId', { userId: user.id })
-  //     if (status) {
-  //       query.andWhere('task.status = :status', { status })
-  //     }
-  //     return query.getMany()
-  //   }
-
   async findAll(user: User, status?: TaskStatus): Promise<Task[]> {
     const where: any = { user }
     if (status) {
@@ -56,6 +46,9 @@ export class TaskService {
     }
     if (updateTaskDto.status) {
       task.status = updateTaskDto.status
+    }
+    if (updateTaskDto.deadline) {
+      task.deadline = updateTaskDto.deadline
     }
 
     await this.taskRepository.save(task)

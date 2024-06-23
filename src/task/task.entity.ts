@@ -16,8 +16,12 @@ export class Task {
   @Column({
     type: 'enum',
     enum: TaskStatus,
+    nullable: false,
   })
   status: TaskStatus
+
+  @Column({ nullable: true })
+  deadline: Date
 
   @ManyToOne(() => User, (user: User) => user.tasks)
   user: User

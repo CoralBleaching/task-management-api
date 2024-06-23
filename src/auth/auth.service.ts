@@ -26,16 +26,26 @@ export class AuthService {
 
   async signUp(auth: AuthDto): Promise<{ access_token: string }> {
     const hash = await argon.hash(auth.password)
-    const user = this.userRepository.create({
+    const newUser = this.userRepository.create({
       firstName: auth.firstName,
       lastName: auth.lastName,
       email: auth.email,
       password: hash,
     })
-    this.userRepository.save(user).catch((_err: QueryFailedError) => {
-      throw new ForbiddenException(`Email ${user.email} already registered.`)
-    })
-    return { access_token: await this.signToken(user.id, user.email) }
+    const user = await this.userRepository
+      .save(newUser)
+      .catch((_err: QueryFailedError) => {
+        throw new ForbiddenException(
+          `Email ${newUser.email} already registered.`,
+        )
+      })
+    return {
+      access_token: await this.signToken(
+        user.id,
+        user.email,
+        user.tokenVersion,
+      ),
+    }
   }
 
   async signIn(auth: Partial<AuthDto>): Promise<{ access_token: string }> {
@@ -47,13 +57,26 @@ export class AuthService {
     if (!match) {
       throw new ForbiddenException('Invalid credentials (password)')
     }
-    return { access_token: await this.signToken(user.id, user.email) }
+    return {
+      access_token: await this.signToken(
+        user.id,
+        user.email,
+        user.tokenVersion,
+      ),
+    }
   }
 
-  signToken(id: number, email: string): Promise<string> {
+  async signOut(user: User): Promise<any> {
+    user.tokenVersion += 1
+    await this.userRepository.save(user)
+    return { message: 'User signed out successfully.' }
+  }
+
+  signToken(id: number, email: string, tokenVersion: number): Promise<string> {
     const payload = {
       sub: id,
-      email,
+      email: email,
+      tokenVersion: tokenVersion,
     }
     return this.jwt.signAsync(payload, {
       secret: this.configService.get('JWT_SECRET'),
